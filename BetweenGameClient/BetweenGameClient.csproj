@@ -108,6 +108,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClientSocket.cs" />
     <Compile Include="GameTable.cs">
       <SubType>Form</SubType>
     </Compile>

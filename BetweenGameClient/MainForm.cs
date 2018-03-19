@@ -43,6 +43,9 @@ namespace BetweenGameClient
 
             clientsocket = IO.Socket(Globals.URLWITHPORTNO,options);
             clientsocket.Connect();
+
+            ClientSocketMessages messages = new ClientSocketMessages(clientsocket);
+
             GameView gameView = new GameView(clientsocket, loginResponse);
             gameView.Parent = tableLayoutPanel1;
             tableLayoutPanel1.Controls.Add(gameView);

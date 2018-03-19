@@ -1,4 +1,4 @@
-﻿'use strict';
+﻿'use strict'; 
 var Hashtable = require('hashtable');
 var Deck = require('./Deck.js');
 var Guid = require('guid');
