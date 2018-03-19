@@ -1,0 +1,19 @@
+{
+  "name": "nodejs-web-app1",
+  "version": "0.0.0",
+  "description": "NodejsWebApp1",
+  "main": "server.js",
+  "author": {
+    "name": "Admin"
+  },
+  "dependencies": {
+    "arraylist": "^0.1.0",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "guid": "0.0.12",
+    "hashtable": "^2.0.2",
+    "mongodb": "^3.0.1",
+    "node-schema-object": "^3.3.4",
+    "socket.io": "^2.0.4"
+  }
+}
