@@ -87,10 +87,10 @@ module.exports.validateUser = validateUser;
 
 class LoginResponse {
     constructor(username, email, userexist, active) {
-        this.userName = username;
-        this.email = email;
-        this.userExist = userexist;
-        this.isUserActive = active;
+        this.UserName = username;
+        this.Email = email;
+        this.UserExist = userexist;
+        this.IsUserActive = active;
     }
 
     get() {

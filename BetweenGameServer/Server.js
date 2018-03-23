@@ -20,7 +20,7 @@ server.listen(9090);
 io.on('connection', function (socket)
 {
     console.log('connected');
-    socketService.onClientConnected(socket);
+    socketService.onClientConnected(io, socket);
 });
 
 app.get('/gameCreatedByUser/:email', (req, res) => {
