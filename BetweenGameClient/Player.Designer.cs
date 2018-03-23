@@ -1,6 +1,6 @@
 ﻿namespace BetweenGameClient
 {
-    partial class Player
+    partial class PlayerControl
     {
         /// <summary> 
         /// Required designer variable.
@@ -28,25 +28,27 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblPlayerName = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // label1
+            // lblPlayerName
             // 
-            this.label1.AutoSize = true;
-            this.label1.BackColor = System.Drawing.SystemColors.ButtonFace;
-            this.label1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.label1.Location = new System.Drawing.Point(37, 107);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(69, 15);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Player Name";
+            this.lblPlayerName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblPlayerName.AutoSize = true;
+            this.lblPlayerName.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.lblPlayerName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lblPlayerName.Location = new System.Drawing.Point(37, 107);
+            this.lblPlayerName.Name = "lblPlayerName";
+            this.lblPlayerName.Size = new System.Drawing.Size(69, 15);
+            this.lblPlayerName.TabIndex = 0;
+            this.lblPlayerName.Text = "Player Name";
             // 
             // Player
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.lblPlayerName);
             this.Name = "Player";
             this.Size = new System.Drawing.Size(145, 139);
             this.Load += new System.EventHandler(this.Player_Load);
@@ -58,6 +60,6 @@
 
         #endregion
 
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblPlayerName;
     }
 }

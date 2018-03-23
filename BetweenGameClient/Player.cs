@@ -11,26 +11,43 @@ using System.Drawing.Drawing2D;
 
 namespace BetweenGameClient
 {
-    public partial class Player : UserControl
+    public partial class PlayerControl : UserControl
     {
+        public Player Player { get; set; }
+
         GraphicsPath path;
-        public Player()
+        public PlayerControl()
         {
             InitializeComponent();
         }
 
+        private string _playerName;
+        public string PlayerName
+        {
+            get
+            {
+                return _playerName;
+            }
+            set
+            {
+                _playerName = value;
+                lblPlayerName.Text = value;
+            }
+        }
         private void Player_Load(object sender, EventArgs e)
         {
             path = RoundedRect(new Rectangle(0, 0, this.ClientSize.Width, ClientSize.Height),22);
             this.Region = new Region(path);
             this.BackColor = Color.ForestGreen;
+            lblPlayerName.Text = string.Empty;
         }
 
         private void Player_Paint(object sender, PaintEventArgs e)
         {
-            TextureBrush b = new TextureBrush(Image.FromFile(@"C:\Users\Admin\Downloads\images (5).jpg"));
-            e.Graphics.FillPath(b, path);
-            e.Graphics.FillEllipse(Brushes.Black, new Rectangle(5, 5, 10, 10));
+            if (string.IsNullOrEmpty(PlayerName))
+                e.Graphics.FillEllipse(Brushes.Black, new Rectangle(5, 5, 10, 10));
+            else
+                e.Graphics.FillEllipse(Brushes.ForestGreen, new Rectangle(5, 5, 10, 10));
         }
 
         public static GraphicsPath RoundedRect(Rectangle bounds, int radius)
@@ -72,11 +89,11 @@ namespace BetweenGameClient
             if (brush == null)
                 throw new ArgumentNullException("brush");
 
-            using (GraphicsPath path = RoundedRect(bounds, cornerRadius))
-            {
-                TextureBrush b = new TextureBrush(Image.FromFile(@"C:\Users\Admin\Downloads\images (3).jpg"));
-                graphics.FillPath(b, path);
-            }
+            //using (GraphicsPath path = RoundedRect(bounds, cornerRadius))
+            //{
+            //    TextureBrush b = new TextureBrush(Image.FromFile(@"C:\Users\Admin\Downloads\images (3).jpg"));
+            //    graphics.FillPath(b, path);
+            //}
         }
     }
 }

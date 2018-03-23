@@ -44,12 +44,20 @@ namespace BetweenGameClient
             clientsocket = IO.Socket(Globals.URLWITHPORTNO,options);
             clientsocket.Connect();
 
-            ClientSocketMessages messages = new ClientSocketMessages(clientsocket);
-
-            GameView gameView = new GameView(clientsocket, loginResponse);
+            GameView gameView = new GameView(this, clientsocket, loginResponse);
             gameView.Parent = tableLayoutPanel1;
             tableLayoutPanel1.Controls.Add(gameView);
             this.Size = gameView.MaximumSize;
+        }
+
+
+        internal void ShowTable(LoginResponse loginResponse, JoinGameResponse response)
+        {
+            GameTable table = new GameTable(loginResponse, response, clientsocket);
+            tableLayoutPanel1.Controls.Clear();
+            table.Parent = tableLayoutPanel1;
+            tableLayoutPanel1.Controls.Add(table);
+            this.Size = table.MaximumSize;
         }
     }
 }

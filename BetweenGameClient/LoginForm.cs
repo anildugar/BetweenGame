@@ -40,14 +40,14 @@ namespace BetweenGameClient
             var response = await client.PostAsync(requestUri, content);
             var responseString = await response.Content.ReadAsStringAsync();
             LoginResponse loginResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<LoginResponse>(responseString);
-            if (!loginResponse.userExist)
+            if (!loginResponse.UserExist)
             {
                 MessageBox.Show("Invalid Username or Password", "Credentials",MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            else if (!loginResponse.isUserActive)
+            else if (!loginResponse.IsUserActive)
             {
-                MessageBox.Show(loginResponse.userName + "User is in-active. Please contact Adminstrator", "User Inactive", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show(loginResponse.UserName + "User is in-active. Please contact Adminstrator", "User Inactive", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
             else

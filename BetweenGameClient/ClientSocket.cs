@@ -15,6 +15,7 @@ namespace BetweenGameClient
             clientSocket = socket;
 
             clientSocket.On("joinGameResponse", (response) => { System.Windows.Forms.MessageBox.Show("Join Game Response Recieved"); });
+            clientSocket.On("newUserJoined", (response) => { System.Windows.Forms.MessageBox.Show("Join User Joined Game"); });
         }
     }
 }
