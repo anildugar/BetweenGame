@@ -6,7 +6,12 @@ var bodyParser = require('body-parser');
 var app = express();
 var server = http.createServer(app);
 
-var io = require('socket.io').listen(server);
+var pingIntervalTime = 50000; //50 seconds.
+
+var io = require('socket.io').listen(server, {
+    pingTimeout: 300000,
+    pingInterval: pingIntervalTime
+});
 
 var userService = require('./UserService.js');
 var gameService = require('./GameService.js');
@@ -21,6 +26,20 @@ io.on('connection', function (socket)
 {
     console.log('connected');
     socketService.onClientConnected(io, socket);
+
+    socket.on('pong', function (data) {
+        console.log("Pong received from client");
+    });
+    setTimeout(sendHeartbeat, pingIntervalTime);
+
+    function sendHeartbeat() {
+        setTimeout(sendHeartbeat, pingIntervalTime);
+        io.sockets.emit('ping', { beat: 1 });
+    }
+
+    socket.on('disconnect', function () {
+        console.log('user disconnected');
+    });
 });
 
 app.get('/gameCreatedByUser/:email', (req, res) => {

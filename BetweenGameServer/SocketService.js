@@ -2,7 +2,10 @@
 var userService = require('./UserService.js');
 var Hashtable = require('hashtable');
 var startedGames = new Hashtable();
-var usersPerGame = new Hashtable();
+var playerIndexPerGame = new Hashtable();
+var playerListPerGame = new Hashtable();
+var Stack = require('stackjs');
+var ArrayList = require('arraylist');
 
 function onClientConnected(io, socket)
 {
@@ -14,9 +17,12 @@ function onClientConnected(io, socket)
         onJoinGame(io, socket, userName, email, gameName, gameId);
     });
 
-    socket.on('startGame', function (gameId, gameName)
-    {
+    socket.on('startGame', function (gameId, gameName) {
         onStartGame(io, socket, gameId, gameName);        
+    });
+
+    socket.on('removeUserFromGame', function (Email, GameId, playerIndex) {
+        onRemoveUserFromGame(io, socket, Email, GameId, playerIndex);
     });
 }
 
@@ -24,7 +30,7 @@ function onStartGame(io, socket, gameId, gameName)
 {
     if (!startedGames.has(gameId))
     {
-        startedGames[gameId] = gameId;
+        startedGames[gameId] = gameName;
         socket.emit('startGameResponse', g);
     }
 }
@@ -54,6 +60,12 @@ class InitiateGameResponse
     }
 }
 
+function populatePlayerIndexStack(playerList)
+{
+    for (var i = 6; i >= 1; i--)
+        playerList.push(i);
+}
+
 function onJoinGame(io, socket, userName, emailId, gameName, gameId)
 {
     //If the game is started, a user cannot join in-between
@@ -61,30 +73,41 @@ function onJoinGame(io, socket, userName, emailId, gameName, gameId)
     if (!startedGames.has(gameId)) {
         console.log(userName + " Joined " + gameName);
         userService.gameCollection.findOne({ "GameId": gameId }, (error, doc) => {
-            var userList = [];
-            var playerIndex = 1;
-            if (!usersPerGame.has(gameId)) {
-                var player = new Player(emailId, playerIndex, userName, gameId, gameName);
-                userList.push(player);
-                usersPerGame.put(gameId, userList);
+            var player;
+            var playerList;
+            var playerIndex;
+            var playerIndexStack;
+
+            if (!playerIndexPerGame.has(gameId)) {
+                playerIndexStack = new Stack();
+                playerList = new ArrayList();
+
+                populatePlayerIndexStack(playerIndexStack);
+                playerIndex = playerIndexStack.pop();
+                player = new Player(emailId, playerIndex, userName, gameId, gameName);
+
+                playerList.push(player);
                 socket.player = player;
+
+                playerIndexPerGame.put(gameId, playerIndexStack);
+                playerListPerGame.put(gameId, playerList);
             }
             else
             {
-                userList = usersPerGame.get(gameId);
-                playerIndex = userList.length + 1;
-                var player = new Player(emailId, playerIndex, userName, gameId, gameName);
-                userList.push(player);
+                playerIndexStack = playerIndexPerGame.get(gameId);
+                playerList = playerListPerGame.get(gameId);
+                playerIndex = playerIndexStack.pop();
+                player = new Player(emailId, playerIndex, userName, gameId, gameName);
+                playerList.push(player);
                 socket.player = player;
             }
 
-            var joinGameResponse = new JoinGameResponse(playerIndex, gameId, gameName, doc.Status, userList, "");
+            var joinGameResponse = new JoinGameResponse(playerIndex, gameId, gameName, doc.Status, playerList.toArray(), "");
             socket.emit('joinGameResponse', joinGameResponse);
             socket.join(gameId);
             var newUser = new NewUserJoinedResponse(gameId, userName);
-            //io.to(gameId).emit('updateConnectedPlayers', userList);
-            if(userList.length > 1)
-                socket.broadcast.to(gameId).emit('updateConnectedPlayers', userList);
+            if (playerList.length > 1)
+                socket.broadcast.to(gameId).emit('updateConnectedPlayers', playerList.toArray());
             //{
             //    var clients = io.sockets.adapter.rooms[gameId].sockets;
 
@@ -94,7 +117,7 @@ function onJoinGame(io, socket, userName, emailId, gameName, gameId)
             //        var clientSocket = io.sockets.connected[clientId];
             //        //console.log(clientSocket.userName);
             //        //you can do whatever you need with this
-            //        clientSocket.emit('updatePlayers', userList);
+            //        clientSocket.emit('updatePlayers', playerList);
 
             //    }
             //}
@@ -105,6 +128,18 @@ function onJoinGame(io, socket, userName, emailId, gameName, gameId)
     {
         var joinGameResponse = new JoinGameResponse(gameId, gameName, doc.Status, "Game is already started, Hence cannot join now");
         socket.emit('joinGameResponse', joinGameResponse);
+    }
+}
+
+function onRemoveUserFromGame(io, socket, emailId, gameId, playerIndex)
+{
+    if (playerIndexPerGame.has(gameId))
+    {
+        var playerIndexStack = playerIndexPerGame.get(gameId);
+        playerIndexStack.push(socket.player.PlayerIndex);
+        var playerList = playerListPerGame.get(gameId);
+        playerList.remove(socket.player);
+        socket.broadcast.to(gameId).emit('removePlayer', socket.player.PlayerIndex);
     }
 }
 
