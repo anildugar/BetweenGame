@@ -6,10 +6,10 @@ var bodyParser = require('body-parser');
 var app = express();
 var server = http.createServer(app);
 
-var pingIntervalTime = 50000; //50 seconds.
+var pingIntervalTime = 25000; //25 seconds.
 
 var io = require('socket.io').listen(server, {
-    pingTimeout: 300000,
+    pingTimeout: 30000,
     pingInterval: pingIntervalTime
 });
 

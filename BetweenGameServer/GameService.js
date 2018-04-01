@@ -109,53 +109,70 @@ class GameAvailableToJoin
 function startGame(gameid)
 {
     var gameexist = false;
-    gamecollection.findOne({ "GameId": gameid }, (error, doc) => {
+    var shuffledList = Deck.ShuffleDeck();
 
-        if (doc != null) {
-            gameexist = true;
-        }
-        else {
-            gameexist = false;
-            res.send('Game doesnt exist');
-        }
+    if (hashtable.has(gameid))
+        hashtable.remove(gameid);
+    hashtable.put(gameid, shuffledList);
 
-        if (gameexist == true) {
-            var shuffledList = Deck.ShuffleDeck();
+    //userService.gameCollection.findOne({ "GameId": gameid }, (error, doc) => {
 
-            if (hashtable.has(doc.SessionId))
-                hashtable.remove(doc.SessionId);
-            hashtable.put(doc.SessionId, shuffledList);
-        }
-    });
+    //    if (doc != null) {
+    //        gameexist = true;
+    //    }
+    //    else {
+    //        gameexist = false;
+    //        res.send('Game doesnt exist');
+    //    }
+
+    //    if (gameexist == true) {
+    //        var shuffledList = Deck.ShuffleDeck();
+
+    //        if (hashtable.has(gameid))
+    //            hashtable.remove(gameid);
+    //        hashtable.put(gameid, shuffledList);
+    //    }
+    //});
 }
 
 function getPlayingCards(gameid)
 {
     var gameexist = false;
-    gamecollection.findOne({ "GameId": gameid }, (error, doc) => {
+    if (hashtable.has(gameid)) {
+        var shuffledList = hashtable.get(gameid);
+        if (shuffledList.size() >= 2) {
+            var card1 = shuffledList.first();
+            shuffledList.remove(0);
+            var card2 = shuffledList.first();
+            shuffledList.remove(0);
+            var cards = { "Card1": card1, "Card2": card2 };
+            return JSON.stringify(cards);
+        }
+    }
+    //userService.gameCollection.findOne({ "GameId": gameid }, (error, doc) => {
 
-        if (doc != null) {
-            gameexist = true;
-        }
-        else {
-            gameexist = false;
-            res.send('Game doesnt exist');
-        }
+    //    if (doc != null) {
+    //        gameexist = true;
+    //    }
+    //    else {
+    //        gameexist = false;
+    //        res.send('Game doesnt exist');
+    //    }
 
-        if (gameexist == true) {
-            if (hashtable.has(doc.SessionId)) {
-                var shuffledList = hashtable.get(doc.SessionId);
-                if (shuffledList.size() >= 2) {
-                    var card1 = shuffledList.first();
-                    shuffledList.remove(0);
-                    var card2 = shuffledList.first();
-                    shuffledList.remove(0);
-                    var cards = { "Card1": card1, "Card2": card2 };
-                    res.send(JSON.stringify(cards));
-                }
-            }
-        }
-    });
+    //    if (gameexist == true) {
+    //        if (hashtable.has(gameid)) {
+    //            var shuffledList = hashtable.get(gameid);
+    //            if (shuffledList.size() >= 2) {
+    //                var card1 = shuffledList.first();
+    //                shuffledList.remove(0);
+    //                var card2 = shuffledList.first();
+    //                shuffledList.remove(0);
+    //                var cards = { "Card1": card1, "Card2": card2 };
+    //                return JSON.stringify(cards);
+    //            }
+    //        }
+    //    }
+    //});
 }
 
 function getTrumpCard(gameid)

@@ -6,11 +6,12 @@ var playerIndexPerGame = new Hashtable();
 var playerListPerGame = new Hashtable();
 var Stack = require('stackjs');
 var ArrayList = require('arraylist');
+var gameService = require('./GameService');
 
 function onClientConnected(io, socket)
 {
-    socket.on('initiateGame', function (userName, gameName, gameId) {
-        onInitiateGame(io, socket, userName, gameName, gameId);
+    socket.on('initiateGame', function (userName, email, gameName, gameId) {
+        onInitiateGame(io, socket, userName, email, gameName, gameId);
     });
 
     socket.on('joinGame', function (userName, email, gameName, gameId) {
@@ -21,42 +22,132 @@ function onClientConnected(io, socket)
         onStartGame(io, socket, gameId, gameName);        
     });
 
-    socket.on('removeUserFromGame', function (Email, GameId, playerIndex) {
-        onRemoveUserFromGame(io, socket, Email, GameId, playerIndex);
+    socket.on('removeUserFromGame', function (email, gameId, playerIndex) {
+        onRemoveUserFromGame(io, socket, email, gameId, playerIndex);
     });
+
+    socket.on('sendCardToPlayer', function (gameId, playerIndex) {
+        sendCardToPlayer(io, socket, gameId, playerIndex);
+    });
+
+    socket.on('sendTrumpCard', function(gameId, playerIndex) {
+        //gameService.getTrumpCard(gameId);
+    });
+}
+
+function sendCardToPlayer(io, socket, gameId, playerIndex)
+{
+    if (startedGames.has(gameId))
+    {
+        var game = startedGames.get(gameId);
+        game.CurrentPlayerIndex = playerIndex;
+        var player = game.PlayerList[playerIndex-1];
+        var cards = gameService.getPlayingCards(gameId);
+        var activePlayer = new ActivePlayerInGame(gameId, player, cards);
+        io.to(gameId).emit('setActivePlayer', activePlayer);
+    }
+}
+
+class ActivePlayerInGame
+{
+    constructor(gameId, player, cards)
+    {
+        this.GameId = gameId;
+        this.ActivePlayer = player;
+        this.Cards = cards;
+    }
 }
 
 function onStartGame(io, socket, gameId, gameName)
 {
     if (!startedGames.has(gameId))
     {
-        startedGames[gameId] = gameName;
-        socket.emit('startGameResponse', g);
+        var response = new GameStartedResponse(gameId, gameName);
+        var playerList = playerListPerGame.get(gameId);
+
+        var game = new Game(gameId, gameName, playerList.size(), playerList.toArray(), 1)
+        startedGames.put(gameId, game);
+        gameService.startGame(gameId);
+
+        io.to(gameId).emit('gameStarted', game);
     }
 }
 
-function onInitiateGame(io, socket, userName, gameName, gameId)
+class Game
 {
-    socket.userName = userName;
+    constructor(gameId, gameName, totalPlayers, playerList, currentPlayerIndex)
+    {
+        this.GameId = gameId;
+        this.GameName = gameName;
+        this.TotalPlayers = totalPlayers;
+        this.PlayerList = playerList;
+        this.CurrentPlayerIndex = currentPlayerIndex;
+    }
+}
+
+class GameStartedResponse
+{
+    constructor(gameId, gameName)
+    {
+        this.GameId = gameId;
+        this.GameName = gameName;
+    }
+}
+
+function onInitiateGame(io, socket, userName, emailId, gameName, gameId)
+{
     console.log(userName + " Initiated " + gameName);
     userService.gameCollection.update(
         { 'GameId': gameId },
         { $set: { 'Status': true } },
-        function (error, result)
-        {
-            var g = new InitiateGameResponse(gameId, gameName, true);
-            socket.emit('initiateGameResponse', g);
-            socket.join(gameId);
+        function (error, result) {
+
+            userService.gameCollection.findOne({ "GameId": gameId }, (error, doc) => {
+                var player;
+                var playerList;
+                var playerIndex;
+                var playerIndexStack;
+
+                if (!playerIndexPerGame.has(gameId)) {
+                    playerIndexStack = new Stack();
+                    playerList = new ArrayList();
+
+                    populatePlayerIndexStack(playerIndexStack);
+                    playerIndex = playerIndexStack.pop();
+                    player = new Player(emailId, playerIndex, userName, gameId, gameName);
+
+                    playerList.push(player);
+                    socket.player = player;
+
+                    playerIndexPerGame.put(gameId, playerIndexStack);
+                    playerListPerGame.put(gameId, playerList);
+                }
+                else {
+                    playerIndexStack = playerIndexPerGame.get(gameId);
+                    playerList = playerListPerGame.get(gameId);
+                    playerIndex = playerIndexStack.pop();
+                    player = new Player(emailId, playerIndex, userName, gameId, gameName);
+                    playerList.push(player);
+                    socket.player = player;
+                }
+
+                var initGameResponse = new InitiateGameResponse(playerIndex, gameId, gameName, doc.Status, playerList.toArray());
+                socket.emit('initiateGameResponse', initGameResponse);
+                socket.join(gameId);
+                if (playerList.length > 1)
+                    io.to(gameId).emit('updateConnectedPlayers', playerList.toArray());
+            });
         });
-        
 }
 
 class InitiateGameResponse
 {
-    constructor(gameId, gameName, started) {
+    constructor(playerIndex, gameId, gameName, started, connectedPlayers) {
+        this.PlayerIndex = playerIndex;
         this.GameId = gameId;
         this.GameStatus = started;
         this.GameName = gameName;
+        this.ConnectedPlayers = connectedPlayers;
     }
 }
 
@@ -105,23 +196,8 @@ function onJoinGame(io, socket, userName, emailId, gameName, gameId)
             var joinGameResponse = new JoinGameResponse(playerIndex, gameId, gameName, doc.Status, playerList.toArray(), "");
             socket.emit('joinGameResponse', joinGameResponse);
             socket.join(gameId);
-            var newUser = new NewUserJoinedResponse(gameId, userName);
             if (playerList.length > 1)
-                socket.broadcast.to(gameId).emit('updateConnectedPlayers', playerList.toArray());
-            //{
-            //    var clients = io.sockets.adapter.rooms[gameId].sockets;
-
-            //    for (var clientId in clients) {
-
-            //        //this is the socket of each client in the room.
-            //        var clientSocket = io.sockets.connected[clientId];
-            //        //console.log(clientSocket.userName);
-            //        //you can do whatever you need with this
-            //        clientSocket.emit('updatePlayers', playerList);
-
-            //    }
-            //}
-            //console.log("Users in a room +", gameId);
+                io.to(gameId).emit('updateConnectedPlayers', playerList.toArray());            
         });
     }
     else
@@ -140,14 +216,7 @@ function onRemoveUserFromGame(io, socket, emailId, gameId, playerIndex)
         var playerList = playerListPerGame.get(gameId);
         playerList.remove(socket.player);
         socket.broadcast.to(gameId).emit('removePlayer', socket.player.PlayerIndex);
-    }
-}
-
-class NewUserJoinedResponse 
-{
-    constructor(gameId, userName) {
-        this.GameId = gameId;
-        this.UserName = userName;
+        socket.leave(gameId);
     }
 }
 
